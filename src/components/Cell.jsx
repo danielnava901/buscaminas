@@ -58,7 +58,7 @@ const Cell = ({value, show, adjacentOnes, x, y, grid, revealCell}) => {
         if (flagged) {
             setContent("🚩");
         } else if (show) {
-        
+    
             setContent(value === 1 ? "💥" : (adjacentOnes === 0 ? "" : adjacentOnes));
         }else {
             setContent("");
@@ -90,15 +90,14 @@ const Cell = ({value, show, adjacentOnes, x, y, grid, revealCell}) => {
                     //
                     newGrid.forEach((row, i) => {
                         row.forEach((cell, j) => {
-                            console.log({i, j})
                             revealCell(i, j, true);
                         });
                     });
                     
                 }else if (value === 0) {
-                    
-                    revealCell(x, y );
+                    revealCell(x, y, false);
                 }
+
             }}
         >{content}</CellContainer>
 }

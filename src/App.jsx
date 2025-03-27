@@ -12,24 +12,31 @@ const LEVEL = {
   hard: "hard",
   demente: "demente"
 }
-function generateRandomGrid(level) {
+
+function getInitValues(level, size = 8) {
   let onesByLevel = {
     easy: 10,
     medium: 20,
     hard: 30,
     demente: 90
   };
-
-  let m = 18;
-  let totalCells = m * m;
+  
+  let totalCells = size * size;
   let shouldBeOnes = Math.floor((onesByLevel[level] * totalCells) / 100);
+  let shouldBeZeros = totalCells - shouldBeOnes;
+  
+  
+  return {shouldBeOnes, shouldBeZeros, size}
+}
+
+function generateRandomGrid(level, size = 8) {
+  let {shouldBeOnes, shouldBeZeros} = getInitValues(level, size);
   let count = 0;
-  
-  let array = Array.from({ length: m }, () => Array.from({ length: m }, () => 0));
-  
+  let array = Array.from({ length: size }, () => Array.from({ length: size }, () => 0));
+
   while (count < shouldBeOnes) {
-    let randomRow = Math.floor(Math.random() * m); 
-    let randomCol = Math.floor(Math.random() * m); 
+    let randomRow = Math.floor(Math.random() * size); 
+    let randomCol = Math.floor(Math.random() * size); 
     
     // Si la posición está vacía, coloca un 1
     if (array[randomRow][randomCol] === 0) {
@@ -38,7 +45,7 @@ function generateRandomGrid(level) {
     }
   }
 
-  console.log({array});
+  //console.log({array});
   return array
 }
 
@@ -52,6 +59,7 @@ const GameOverTitle = styled.div`
   align-items: center;
   flex-direction: column;
   gap: 1rem;
+  height: 100%;
 
   h1.gameover {
     font-size: 2rem;
@@ -71,10 +79,34 @@ const GameOverTitle = styled.div`
 const NewGameWrapper = styled.div`
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
+  justify-content: space-around;
   align-items: center;
   width: 100%;
   height: 70px;
+
+  .board-size {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+
+    :hover {
+      background-color: rgb(163, 146, 146);
+      cursor: pointer;
+    }
+  }
+  
+  .board-size-btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    
+  }
+
+  .board-size-btn.active {
+    background-color: rgb(72, 112, 214);
+    color: white;
+    font-weight: bold;
+  }
 
   button {
     cursor: pointer;
@@ -88,6 +120,7 @@ const NewGameWrapper = styled.div`
     outline: none;
   }
 
+  
   button.active {
     background-color:rgb(72, 112, 214);
     }
@@ -106,12 +139,16 @@ const NewGameWrapper = styled.div`
 `;
 
 function App() {
+  const [size, setSize] = useState(8);
+  const [prevSize, setPrevSize] = useState(8);
   const [level, setLevel] = useState(LEVEL.easy);
   const [prevLevel, setPrevLevel] = useState(LEVEL.easy);
-  const [gridNode, setGridNode] = useState(new GridNode(generateRandomGrid(level)));
+  const [initValues] = useState(getInitValues(level, size));
+
+  const [gridNode, setGridNode] = useState(new GridNode(generateRandomGrid(level, size)));
   const [grid, setGrid] = useState(gridNode.getGridToPrint());
   const [showNewModal, setShowNewModal] = useState(false);
-  const {gameOver, setGameOver, setStatus} = useStore((state) => state)
+  const {gameOver, setGameOver, status, setStatus, zerosClicked, setClickCel} = useStore((state) => state)
   
   const revealCell = (x, y, reveal = false) => {
     
@@ -134,12 +171,19 @@ function App() {
 
         if(!reveal) {
           // Asegurar que la celda no sea una mina
-          if (grid[curX][curY].value === 1) continue;
-          
+          if (grid[curX][curY].value === 1) {
+            continue;
+          }else {
+            if(!newGrid[curX][curY].show) {
+                setClickCel(1);
+            }
+            
+          }
         }
 
         // Mostrar la celda en la interfaz
         newGrid[curX][curY].show = true;
+        
 
         // Si es un "0", propagar la búsqueda a vecinos
         
@@ -161,7 +205,8 @@ function App() {
 
   const newGame = () => {
     setGameOver(false);
-    const newRealGrid = generateRandomGrid(level);
+    console.log("new game", size);
+    const newRealGrid = generateRandomGrid(level, size);
     const newGridNode = new GridNode(newRealGrid);
     const gridToPrint = newGridNode.getGridToPrint();
     
@@ -176,8 +221,24 @@ function App() {
   }
 
   useEffect(() => {
+    console.log("new game", level, " y size", size);
     newGame();
-  }, [level])
+  }, [level, size])
+
+
+  useEffect(() => {
+    let shouldBeZeros = initValues.shouldBeZeros;
+      if(zerosClicked === shouldBeZeros) {
+        setGameOver(true);
+        setStatus("win");
+        const newGrid = [...grid];
+        newGrid.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                revealCell(i, j, true);
+            });
+        });
+      }
+  }, [zerosClicked])
 
   return (
     <div style={{display: 'flex',
@@ -185,22 +246,65 @@ function App() {
       justifyContent: 'flex-start', 
       alignItems: 'center', 
       height: '100vh',
-      width: '90vw',
+      width: '100vw',
       }}>
       
         <NewGameWrapper>
-          <button className={`${level === LEVEL.easy ? "active" : ""}`} onClick={() => {changeGameLevel(LEVEL.easy)}}>Fácil</button>
-          <button className={`${level === LEVEL.medium ? "active" : ""}`} onClick={() => {changeGameLevel(LEVEL.medium)}}>Medium</button>
-          <button className={`${level === LEVEL.hard ? "active" : ""}`} onClick={() => {changeGameLevel(LEVEL.hard)}}>Difícil</button>
-          <button className={`demente ${level === LEVEL.demente ? "active" : ""}`} onClick={() => {changeGameLevel(LEVEL.demente)}}>Demente</button>
-          <button className='new' onClick={newGame}>Nuevo Juego</button>
+          <div className="board-size">
+            <span className={`board-size-btn ${size === 8 ? "active" : ""}`}
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevSize(8);
+                }}>8x8</span>
+            <span className={`board-size-btn ${size === 12 ? "active" : ""}`} 
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevSize(12);
+              }}>12x12</span>
+            <span className={`board-size-btn ${size === 18 ? "active" : ""}`} 
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevSize(18);
+                }}>18x18</span>
+          </div>
+          <div style={{display: 'flex', gap: '1rem'}}>
+            <button 
+              className={`${level === LEVEL.easy ? "active" : ""}`} 
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevLevel(LEVEL.easy);
+              }}>Fácil</button>
+            <button 
+              className={`${level === LEVEL.medium ? "active" : ""}`}
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevLevel(LEVEL.medium);
+              }}>Medium</button>
+            <button 
+              className={`${level === LEVEL.hard ? "active" : ""}`} 
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevLevel(LEVEL.hard);
+              }}>Difícil</button>
+            <button 
+              className={`demente ${level === LEVEL.demente ? "active" : ""}`} 
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevLevel(LEVEL.demente);
+              }}>Demente</button>
+            <button 
+              className='new' 
+              onClick={newGame}>Nuevo Juego</button>
+          </div>
         </NewGameWrapper>
       
+        
         <Grid key={gridNode.id} grid={grid} revealCell={revealCell}/>
         {
           gameOver ? <Modal onClose={() => {setGameOver(false)}}>
             <GameOverTitle>
-              <h1 className="gameover">Game Over</h1>
+              {status === "gameover" ? <h1 className="gameover">Game Over</h1> : 
+              <h1 className="gameover">¡Ganaste!</h1>}
             </GameOverTitle>
           </Modal>   : null
         }
@@ -212,10 +316,22 @@ function App() {
                   textTransform: "uppercase", 
                   textDecoration: "underline",
                   backgroundColor: "yellow", 
-                  padding: "0 20px"}}>{LEVEL[prevLevel]}</span>
+                  padding: "0 20px"}}>
+                    {LEVEL[prevLevel]}
+                </span> {` `}
+                y tamaño 
+                <span style={{
+                  textTransform: "uppercase", 
+                  textDecoration: "underline",
+                  backgroundColor: "yellow", 
+                  padding: "0 20px"}}>
+                  <span style={{fontWeight: "bold", fontSize: "3.5rem"}}>{prevSize}</span>x
+                  <span style={{fontWeight: "bold", fontSize: "3.5rem"}}>{prevSize}</span>
+                </span>
               </h1>
               <button className="newgame" onClick={() => {
                 setLevel(prevLevel);
+                setSize(prevSize);
                 setShowNewModal(false);
               }}>Nuevo Juego</button>
             </GameOverTitle>
