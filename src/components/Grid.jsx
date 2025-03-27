@@ -2,11 +2,7 @@ import Cell from "./Cell";
 import {useState, useEffect} from 'react';
 
     
-const Grid = ({grid}) => {
-    const [myGrid, setMyGrid] = useState(grid);
-    useEffect(() => {
-        setMyGrid(grid);
-    }, [grid]);
+const Grid = ({grid, revealCell}) => {
     
     return <div>
         {
@@ -14,7 +10,13 @@ const Grid = ({grid}) => {
                 return <div key={rowIndex} style={{display: 'flex'}}>
                     {
                         row.map((cell, cellIndex) => {
-                            return <Cell key={cellIndex} {...cell} />
+                            return <Cell 
+                                x={rowIndex}
+                                y={cellIndex}
+                                key={`${rowIndex}-${cellIndex}`}
+                                grid={grid}
+                                revealCell={revealCell}
+                                {...cell} />
                         })
                     }
                 </div>

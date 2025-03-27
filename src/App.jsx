@@ -12,7 +12,6 @@ const LEVEL = {
   hard: "hard"
 }
 function generateRandomGrid(level) {
-  //let m = Math.floor(Math.random() * 9) + 2;
   let onesByLevel = {
     easy: 10,
     medium: 20,
@@ -24,26 +23,22 @@ function generateRandomGrid(level) {
   let shouldBeOnes = Math.floor((onesByLevel[level] * totalCells) / 100);
   let count = 0;
   
-  let array = Array.from({ length: m }, () => 
-    Array.from({ length: m }, () => {
-      let value = Math.random() < 0.5 ? 0 : 1;
-      
-      if (value === 1) {
-        if(shouldBeOnes > 0) {
-          shouldBeOnes--;
-        }else {
-          value = 0;
-        }
-        count++;
-      }
-      return value;
-    })
-  );
+  let array = Array.from({ length: m }, () => Array.from({ length: m }, () => 0));
   
+  while (count < shouldBeOnes) {
+    let randomRow = Math.floor(Math.random() * m); 
+    let randomCol = Math.floor(Math.random() * m); 
+    
+    // Si la posición está vacía, coloca un 1
+    if (array[randomRow][randomCol] === 0) {
+      array[randomRow][randomCol] = 1;
+      count++;
+    }
+  }
+
+  console.log({array});
   return array
 }
-
-
 
 const GameOverTitle = styled.div`
   font-size: 2rem;
@@ -91,17 +86,64 @@ function App() {
   let [grid, setGrid] = useState(gridNode.getGridToPrint());
   const {gameOver, setGameOver, setStatus} = useStore((state) => state)
   
-  console.log({gridNode})
+  const revealCell = (x, y, reveal = false) => {
+    
+    let newGrid = [...grid];
+
+    const directions = [
+        [0, 1], [0, -1], [1, 0], [-1, 0], 
+        [1, 1], [-1, -1], [1, -1], [-1, 1]
+    ];
+
+    const queue = [[x, y]];
+    const visited = new Set();
+
+    while (queue.length) {
+        const [curX, curY] = queue.shift();
+        const key = `${curX},${curY}`;
+        
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        if(!reveal) {
+          // Asegurar que la celda no sea una mina
+          if (grid[curX][curY].value === 1) continue;
+          
+        }
+
+        // Mostrar la celda en la interfaz
+        newGrid[curX][curY].show = true;
+
+        // Si es un "0", propagar la búsqueda a vecinos
+        
+        if (grid[curX][curY].adjacentOnes === 0) {
+            for (let [dx, dy] of directions) {
+                let newX = curX + dx;
+                let newY = curY + dy;
+
+                if (newX >= 0 && newX < grid.length && newY >= 0 && newY < grid[0].length) {
+                    queue.push([newX, newY]);
+                }
+            }
+        }
+    }
+
+    setGrid([...newGrid]);
+  };
+
+
   const newGame = () => {
     setGameOver(false);
-    const newRealGrid = generateRandomGrid();
+    const newRealGrid = generateRandomGrid(level);
     const newGridNode = new GridNode(newRealGrid);
     const gridToPrint = newGridNode.getGridToPrint();
-    console.log({gridToPrint})
+    
     setGrid(gridToPrint);
     setGridNode(newGridNode);
     setStatus("playing");
   }
+
+
 
   return (
     <div style={{display: 'flex',
@@ -119,7 +161,7 @@ function App() {
           <button className='new' onClick={newGame}>Nuevo Juego</button>
         </NewGameWrapper>
       
-        <Grid key={gridNode.id} grid={grid} />
+        <Grid key={gridNode.id} grid={grid} revealCell={revealCell}/>
         {
           gameOver ? <Modal onClose={() => {setGameOver(false)}}>
             <GameOverTitle>

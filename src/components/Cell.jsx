@@ -6,10 +6,12 @@ const CellContainer = styled.div`
     width: 25px; 
     height: 25px;
     border: 2px solid white;
-    background-color: ${props => 
-        props.$flagged ? 'rgb(109, 98, 98)' :  // No cambia el fondo si está marcada
-        props.$show ? (props.$value === 1 ? "red" : "white") 
-        : 'rgb(109, 98, 98)'};
+    background-color: ${props => {
+        return props.$flagged ? 'rgb(109, 98, 98)' :  // No cambia el fondo si está marcada
+                props.$show ? (props.$value === 1 ? "red" : "white") 
+                : 'rgb(114, 100, 100)'
+            }
+        };
     color: ${props => props.$show ? 'black' : 'black'};
     display: flex;
     justify-content: center;
@@ -24,9 +26,9 @@ const CellContainer = styled.div`
 `;
 
 
-const Cell = ({value, adjacentOnes}) => {
+const Cell = ({value, show, adjacentOnes, x, y, grid, revealCell}) => {
     const [flagged, setFlagged] = useState(false);
-    const [show, setShow] = useState(false);
+    //const [show, setShow] = useState(false);
     const [content, setContent] = useState("");
     const {setGameOver, status, setStatus} = useStore((state) => state)
     const timerRef = useRef(null);
@@ -36,12 +38,13 @@ const Cell = ({value, adjacentOnes}) => {
     const handlePressStart = (e) => {
       e.preventDefault(); 
 
-      console.log("Long press triggered");
       longPressTriggered.current = false; // Reset
 
       timerRef.current = setTimeout(() => {
         longPressTriggered.current = true; // Se activa el long-press
-        setFlagged((prev) => !prev);
+        setFlagged((prev) => {
+            return !prev
+        });
       }, 600);
     };
   
@@ -49,11 +52,16 @@ const Cell = ({value, adjacentOnes}) => {
         clearTimeout(timerRef.current);
     };
 
+
     useEffect(() => {
+        
         if (flagged) {
             setContent("🚩");
         } else if (show) {
+        
             setContent(value === 1 ? "💥" : (adjacentOnes === 0 ? "" : adjacentOnes));
+        }else {
+            setContent("");
         }
     }, [flagged, show, value, adjacentOnes]);
 
@@ -73,11 +81,23 @@ const Cell = ({value, adjacentOnes}) => {
                 if (status !== "playing") return;
                 if (flagged) return; // No abrir celdas con bandera
 
-                setShow(true);
+                //setShow(true);
     
                 if (value === 1) {
                     setGameOver(true);
                     setStatus("gameover");
+                    const newGrid = [...grid];
+                    //
+                    newGrid.forEach((row, i) => {
+                        row.forEach((cell, j) => {
+                            console.log({i, j})
+                            revealCell(i, j, true);
+                        });
+                    });
+                    
+                }else if (value === 0) {
+                    
+                    revealCell(x, y );
                 }
             }}
         >{content}</CellContainer>
