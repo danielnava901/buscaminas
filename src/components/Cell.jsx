@@ -5,11 +5,11 @@ import useStore from '../store/useStore';
 const CellContainer = styled.div`
     width: 25px; 
     height: 25px;
-    border: 2px solid white;
+    border: 1px solid rgba(125, 114, 114, 0.5);
     background-color: ${props => {
         return props.$flagged ? 'rgb(109, 98, 98)' :  // No cambia el fondo si está marcada
                 props.$show ? (props.$value === 1 ? "red" : "white") 
-                : 'rgb(114, 100, 100)'
+                : 'rgb(103, 192, 87)'
             }
         };
     color: ${props => props.$show ? 'black' : 'black'};
@@ -22,6 +22,12 @@ const CellContainer = styled.div`
         background-color: ${props => props.$show ? '' : 'rgb(163, 146, 146)'};
         cursor: pointer;
         color: white;
+    }
+
+    @media (max-width: 480px) {
+        width: 20px; 
+        height: 20px;
+        font-size: 0.9rem;
     }
 `;
 
@@ -54,11 +60,9 @@ const Cell = ({value, show, adjacentOnes, x, y, grid, revealCell}) => {
 
 
     useEffect(() => {
-        
         if (flagged) {
             setContent("🚩");
         } else if (show) {
-    
             setContent(value === 1 ? "💥" : (adjacentOnes === 0 ? "" : adjacentOnes));
         }else {
             setContent("");
@@ -76,12 +80,11 @@ const Cell = ({value, show, adjacentOnes, x, y, grid, revealCell}) => {
             onMouseUp={handlePressEnd} // Detiene el long-press si el usuario suelta antes
             onTouchEnd={handlePressEnd} // Para móviles
             onTouchCancel={handlePressEnd}
+            
             onClick={() => {
                 if (longPressTriggered.current) return; // Evita el click después del long-press
                 if (status !== "playing") return;
-                if (flagged) return; // No abrir celdas con bandera
-
-                //setShow(true);
+                if (flagged) return;
     
                 if (value === 1) {
                     setGameOver(true);

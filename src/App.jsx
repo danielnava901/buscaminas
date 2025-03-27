@@ -61,13 +61,20 @@ const GameOverTitle = styled.div`
   gap: 1rem;
   height: 100%;
 
+  h1 {
+    @media (max-width: 740px) {
+      font-size: 1.2rem;
+    }
+  }
+
   h1.gameover {
     font-size: 2rem;
   }
 
   button.newgame { 
     background-color:rgb(24, 104, 44);
-    width: 400px;
+    width: 90%;
+    
     &:hover {
       background-color: #45a049;
     }
@@ -75,6 +82,9 @@ const GameOverTitle = styled.div`
       background-color: #3e8e41;
     }
   }
+  
+  
+  
 `
 const NewGameWrapper = styled.div`
   display: flex;
@@ -82,7 +92,8 @@ const NewGameWrapper = styled.div`
   justify-content: space-around;
   align-items: center;
   width: 100%;
-  height: 70px;
+  flex-wrap: wrap;
+  
 
   .board-size {
     display: flex;
@@ -94,12 +105,16 @@ const NewGameWrapper = styled.div`
       background-color: rgb(163, 146, 146);
       cursor: pointer;
     }
+    
   }
   
   .board-size-btn {
     padding: 10px 20px;
     border-radius: 5px;
-    
+    @media (max-width: 480px) {
+        font-size: 14px;
+        padding: 5px 10px;
+      }
   }
 
   .board-size-btn.active {
@@ -118,6 +133,10 @@ const NewGameWrapper = styled.div`
     font-weight: bold;
     transition: background-color 0.3s;
     outline: none;
+      @media (max-width: 480px) {
+        font-size: 14px;
+        padding: 5px 10px;
+      }
   }
 
   
@@ -205,7 +224,6 @@ function App() {
 
   const newGame = () => {
     setGameOver(false);
-    console.log("new game", size);
     const newRealGrid = generateRandomGrid(level, size);
     const newGridNode = new GridNode(newRealGrid);
     const gridToPrint = newGridNode.getGridToPrint();
@@ -245,8 +263,8 @@ function App() {
       flexDirection: 'column', 
       justifyContent: 'flex-start', 
       alignItems: 'center', 
-      height: '100vh',
-      width: '100vw',
+      flexWrap: 'wrap',
+      gap: '1rem',
       }}>
       
         <NewGameWrapper>
@@ -297,9 +315,9 @@ function App() {
               onClick={newGame}>Nuevo Juego</button>
           </div>
         </NewGameWrapper>
-      
-        
+          
         <Grid key={gridNode.id} grid={grid} revealCell={revealCell}/>
+        
         {
           gameOver ? <Modal onClose={() => {setGameOver(false)}}>
             <GameOverTitle>
