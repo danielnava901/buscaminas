@@ -19,7 +19,7 @@ const CellContainer = styled.div`
     font-size: 1.8rem;
 
     &:hover {
-        background-color: ${props => props.$show ? '' : 'rgb(163, 146, 146)'};
+        opacity: ${props => props.$show ? '1' : '0.8'};
         cursor: pointer;
         color: white;
     }
