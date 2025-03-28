@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 const useStore = create((set) => ({
   gameOver: false,
-  status: "playing", //gameover, playing, win
+  status: "playing", //gameover, playing, win, paused, restart
   zerosClicked: 0,
   minesSeted: 0,
   setZerosClicked: (value) => set(() => ({zerosClicked: value})),

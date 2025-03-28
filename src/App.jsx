@@ -7,6 +7,8 @@ import useStore from './store/useStore'
 import NewGameWrapper from './components/NewGameWrapper'
 import GameOverTitle from './components/GameOverTitle'
 import Wrapper from './components/Wrapper'
+import Timer from './components/Timer'
+import TimerWrapper, { TimerOptionsWrapper } from './components/TimerWrapper'
 
 const LEVEL = {
   easy: "easy",
@@ -14,6 +16,12 @@ const LEVEL = {
   hard: "hard",
   demente: "demente"
 }
+
+const TIME_LEFT = {
+  one: 1 * 60,
+  five: 5 * 60,
+  ten: 10 * 60
+};
 
 function getInitValues(level, size = 8) {
   let onesByLevel = {
@@ -60,8 +68,12 @@ function App() {
   const [initValues, setInitialValues] = useState(getInitValues(level, size));
   const [gridNode, setGridNode] = useState(new GridNode(generateRandomGrid(level, size)));
   const [grid, setGrid] = useState(gridNode.getGridToPrint());
+  const [timer, setTimer] = useState(TIME_LEFT.five);
+  const [prevTimer, setPrevTimer] = useState(TIME_LEFT.five);
+  const [gameOverText, setGameOverText] = useState("Game Over!!");
   const [showNewModal, setShowNewModal] = useState(false);
-  const {gameOver, 
+  const {
+    gameOver, 
     status, 
     zerosClicked, 
     setStatus, 
@@ -70,7 +82,9 @@ function App() {
     minesSeted, 
     addCorrectMinesSeted, 
     setCorrectMinesSeted,
-    setZerosClicked} = useStore((state) => state)
+    setZerosClicked
+  } = useStore((state) => state);
+
   
   const revealCell = (x, y, reveal = false) => {
     let newGrid = [...grid];
@@ -140,21 +154,20 @@ function App() {
     
     setGrid(gridToPrint);
     setGridNode(newGridNode);
-    setStatus("playing");
+    setStatus("restart");
     addCorrectMinesSeted(0);
     setInitialValues(getInitValues(level, size));
     setZerosClicked(0);
     setCorrectMinesSeted(0)
+    setTimeout(() => {setStatus("playing")}, 0)
   }
 
  
   useEffect(() => {
     newGame();
-  }, [level, size]);
-
+  }, [level, size, timer]);
 
   useEffect(() => {
-    //console.log("B", {zerosClicked, shouldBeZeros: initValues.shouldBeZeros});
     if(minesSeted === initValues.shouldBeOnes && zerosClicked === initValues.shouldBeZeros) {
       setGameOver(true);
       setStatus("win");
@@ -163,7 +176,6 @@ function App() {
   }, [zerosClicked]);
 
   useEffect(() => {
-    //console.log("A", {minesSeted, mines: initValues.shouldBeOnes});
     if(minesSeted === initValues.shouldBeOnes && zerosClicked === initValues.shouldBeZeros) {
       setGameOver(true);
       setStatus("win");
@@ -171,6 +183,7 @@ function App() {
     }
 
   }, [minesSeted]);
+
 
   return ( 
     <Wrapper>
@@ -225,14 +238,51 @@ function App() {
           
         <Grid key={gridNode.id} grid={grid} revealCell={revealCell}/>
         
+        <TimerWrapper>
+          <Timer 
+            timerInit={timer}
+            gameStatus={status}
+            onTimeout={() => {
+              setGameOver(true);
+              setStatus("gameover");
+              setGameOverText("Game Over!! se te acabó el tiempo");
+          }}/>
+          <TimerOptionsWrapper>
+            <div 
+              className={`${timer === TIME_LEFT.one ? "active" : ""}`}
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevTimer(TIME_LEFT.one);
+                setStatus("paused");
+              }}>1 min</div>
+            <div 
+              className={`${timer === TIME_LEFT.five ? "active" : ""}`}
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevTimer(TIME_LEFT.five);
+                setStatus("paused");
+              }}>5 min</div>
+            <div 
+              className={`${timer === TIME_LEFT.ten ? "active" : ""}`}
+              onClick={() => {
+                setShowNewModal(true);
+                setPrevTimer(TIME_LEFT.ten);
+                setStatus("paused");
+              }}>10 min</div>
+          </TimerOptionsWrapper>
+        </TimerWrapper>
+
         <Modal open={gameOver} onClose={() => {setGameOver(false)}}>
           <GameOverTitle>
-            {status === "gameover" ? <h1 className="gameover">Game Over</h1> : 
+            {status === "gameover" ? <h1 className="gameover">{gameOverText}</h1> : 
             <h1 className="gameover">¡Ganaste!</h1>}
           </GameOverTitle>
         </Modal>
         
-        <Modal open={showNewModal} onClose={() => {setShowNewModal(false)}}>
+        <Modal open={showNewModal} onClose={() => {
+          setShowNewModal(false);
+          setTimeout(() => {setStatus("playing")}, 0)
+          }}>
           <GameOverTitle>
             <h1>¿Quieres empezar un juego nuevo en nivel {` `}
               <span style={{
@@ -240,9 +290,8 @@ function App() {
                 textDecoration: "underline",
                 backgroundColor: "yellow", 
                 padding: "0 20px"}}>
-                  {LEVEL[prevLevel]}
-              </span> {` `}
-              y tamaño 
+                  {LEVEL[prevLevel]},
+              </span>{` `} tamaño 
               <span style={{
                 textTransform: "uppercase", 
                 textDecoration: "underline",
@@ -251,14 +300,21 @@ function App() {
                 <span style={{fontWeight: "bold", fontSize: "3.5rem"}}>{prevSize}</span>x
                 <span style={{fontWeight: "bold", fontSize: "3.5rem"}}>{prevSize}</span>
               </span>
+                y tiempo
+              <span style={{
+                textTransform: "uppercase", 
+                textDecoration: "underline",
+                backgroundColor: "yellow", 
+                padding: "0 20px"}}>{prevTimer / 60 === 1 ? " 1 minuto": `${prevTimer / 60} minutos`}</span>
             </h1>
             <button className="newgame" onClick={() => {
               setLevel(prevLevel);
               setSize(prevSize);
+              setTimer(prevTimer);
               setShowNewModal(false);
+              
             }}>Nuevo Juego</button>
           </GameOverTitle>
-          
         </Modal>
     </Wrapper>
   )
