@@ -23,17 +23,17 @@ const ModalContent = styled.div`
   position: absolute;
 `;
 
-const Modal = ({ onClose, children }) => {
+const Modal = ({ open, onClose, children }) => {
   return createPortal(
-    <ModalContainer
-      onClick={() => {
-        onClose();
-      }}
-    >
-      <ModalContent onClick={(e) => e.stopPropagation()}>
-        {children}
-      </ModalContent>
-    </ModalContainer>,
+    open ? <ModalContainer
+    onClick={() => {
+      onClose();
+    }}
+  >
+    <ModalContent onClick={(e) => e.stopPropagation()}>
+      {children}
+    </ModalContent>
+  </ModalContainer> : null,
     document.getElementById("root-modal")
   );
 };
